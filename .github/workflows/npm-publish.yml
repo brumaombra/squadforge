@@ -1,0 +1,39 @@
+name: Publish to npm
+
+on:
+  # Run this workflow whenever code is pushed to the main branch
+  push:
+    branches:
+      - main
+
+# This workflow only needs read access to repository contents
+permissions:
+  contents: read
+
+jobs:
+  # Main job to publish the package to npm
+  publish-npm:
+    runs-on: ubuntu-latest
+
+    steps:
+      # Download the repository code again in the publish job
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # Install Node.js, configure the npm registry, and enable npm caching
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          registry-url: https://registry.npmjs.org
+          cache: npm
+
+      # Install exact dependencies from package-lock.json
+      - name: Install dependencies
+        run: npm ci
+
+      # Publish the current package.json version to npm using the repo secret token
+      - name: Publish package
+        run: npm publish --access public
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
