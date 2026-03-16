@@ -260,7 +260,7 @@ Run the test suite:
 npm test
 ```
 
-Run the bundled example:
+Run the example from a repository checkout:
 
 ```bash
 npm run example

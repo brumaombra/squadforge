@@ -27,8 +27,7 @@
     "files": [
         "src",
         "README.md",
-        "LICENSE",
-        "examples"
+        "LICENSE"
     ],
     "engines": {
         "node": ">=18.0.0"
