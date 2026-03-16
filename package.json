@@ -1,11 +1,23 @@
 {
     "name": "squadforge",
     "version": "0.1.0",
-    "description": "Opinionated JavaScript framework for main-agent and subagent squads",
+    "description": "JavaScript framework for building a main AI agent that orchestrates specialized subagents, tools, prompts, skills, sessions, and cron workflows.",
+    "author": "Mauro Brambilla",
     "type": "module",
     "main": "./src/index.js",
     "exports": {
         ".": "./src/index.js"
+    },
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/brumaombra/squadforge.git"
+    },
+    "homepage": "https://github.com/brumaombra/squadforge#readme",
+    "bugs": {
+        "url": "https://github.com/brumaombra/squadforge/issues"
+    },
+    "publishConfig": {
+        "access": "public"
     },
     "scripts": {
         "test": "node --test ./tests/**/*.test.js",
@@ -15,6 +27,7 @@
     "files": [
         "src",
         "README.md",
+        "LICENSE",
         "examples"
     ],
     "engines": {
@@ -23,10 +36,16 @@
     "keywords": [
         "ai",
         "agent",
+        "agent-framework",
+        "automation",
+        "cron",
         "framework",
+        "llm",
         "multi-agent",
-        "subagent",
-        "llm"
+        "orchestration",
+        "prompt-engineering",
+        "sessions",
+        "subagent"
     ],
     "dependencies": {
         "node-cron": "4.2.1",

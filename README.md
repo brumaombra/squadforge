@@ -1,21 +1,89 @@
-# squadforge
+<div align="center">
 
-Opinionated JavaScript framework for building a single main-agent entrypoint backed by a squad of specialized subagents.
+# 🤖 Squadforge
 
-## Current MVP
+### Forge one main AI agent. Orchestrate the whole squad.
 
-This first cut focuses on the core filesystem-driven abstraction layer:
+Squadforge is a JavaScript framework for building one main AI agent that coordinates specialized subagents, local tools, prompt files, reusable skills, persisted sessions, and cron-driven workflows.
 
-- automatically load `leader.md` plus subagent markdown files from an `agents/` folder during agent runtime assembly
-- automatically compose prompts from shared markdown fragments in a `prompts/` folder during agent runtime assembly
-- automatically load skills from `skills/<skill-id>/SKILL.md` folders during agent runtime assembly
-- parse frontmatter metadata such as `name`, `description`, `model`, and `allowed_tools`
-- automatically load tools from a `tools/` folder during agent runtime assembly, including nested tool folders
-- expose a single `forge(...)` entrypoint while the framework runtime manages loaded definitions, active subagents, and session storage
+<p>
+  <a href="https://github.com/brumaombra/squadforge"><img alt="GitHub Repo" src="https://img.shields.io/badge/github-brumaombra%2Fsquadforge-111111?logo=github"></a>
+  <a href="https://www.npmjs.com/package/squadforge"><img alt="npm" src="https://img.shields.io/badge/npm-squadforge-CB3837?logo=npm&logoColor=white"></a>
+  <img alt="Node 18+" src="https://img.shields.io/badge/node-%3E%3D18-3C873A?logo=node.js&logoColor=white">
+  <img alt="License MIT" src="https://img.shields.io/badge/license-MIT-2563EB">
+  <img alt="Status Early Release" src="https://img.shields.io/badge/status-early%200.x-F59E0B">
+</p>
 
-The orchestration loop and long-lived chat runtime are built into the framework without changing the folder conventions.
+<p>
+  🧠 Main-agent orchestration • 🤝 Specialized subagents • 🛠️ Tool runtime • 🧩 Prompt + skill loading • ⏰ Cron workflows
+</p>
 
-## Folder Convention
+<p>
+  <a href="#features"><strong>Features</strong></a> •
+  <a href="#install"><strong>Install</strong></a> •
+  <a href="#quick-start"><strong>Quick Start</strong></a> •
+  <a href="#project-layout"><strong>Project Layout</strong></a> •
+  <a href="#built-in-tools"><strong>Built-in Tools</strong></a> •
+  <a href="#public-api"><strong>Public API</strong></a>
+</p>
+
+</div>
+
+Squadforge is designed for agent systems that need a clean filesystem convention, a long-lived runtime loop, and built-in delegation primitives without forcing application code to own the orchestration internals.
+
+## ✨ Features
+
+- Filesystem-driven app structure for agents, prompts, skills, tools, sessions, and crons
+- Single `forge(...)` entrypoint for booting a runtime-backed leader agent
+- Built-in leader and subagent communication primitives
+- Background subagent registry with follow-up chat support
+- Persistent session storage with trimming and TTL cleanup
+- Runtime-owned cron scheduling with queueing into agent sessions
+- OpenRouter-backed LLM client included out of the box
+- Channel-agnostic inbound and outbound runtime message contract
+
+## 📦 Install
+
+```bash
+npm install squadforge
+```
+
+Requirements:
+
+- Node.js 18 or newer
+
+## 🚀 Quick Start
+
+```js
+import { forge, OpenRouterLlm } from 'squadforge';
+
+const agent = await forge({
+    rootDir: process.cwd(),
+    llm: new OpenRouterLlm({
+        apiKey: process.env.OPENROUTER_API_KEY
+    }),
+    model: 'openai/gpt-5-mini'
+});
+
+agent.onMessage(receiveMessage => {
+    telegram.on('message', update => {
+        receiveMessage({
+            sessionId: `telegram:${update.chat.id}`,
+            role: 'user',
+            content: update.text,
+            replyToId: update.message_id
+        });
+    });
+});
+
+agent.sendMessage(async message => {
+    await telegram.sendMessage(message.sessionId.split(':')[1], message.content);
+});
+
+await agent.start();
+```
+
+## 🗂️ Project Layout
 
 ```text
 my-app/
@@ -36,9 +104,15 @@ my-app/
       web_search.js
     filesystem/
       read_file.js
+  sessions/
+  crons/
 ```
 
-## Agent Markdown
+## 🤖 Agent Definitions
+
+Each agent lives in `agents/<id>.md`.
+
+Example:
 
 ```md
 ---
@@ -52,16 +126,20 @@ model: openai/gpt-5-mini
 You are a research specialist.
 ```
 
-## Prompt Composition
+Rules:
 
-Squadforge uses the body of each markdown file in `agents/` as the base prompt for that agent.
+- `leader.md` is required
+- at least one non-leader subagent file is required
+- `allowed_tools` may list external tools; built-in tools are injected automatically by role
 
-- The leader prompt is composed from `agents/leader.md` plus `prompts/SUBAGENTS.md`, `prompts/TOOLS.md`, and `prompts/SKILLS.md`.
-- Subagent prompts are composed from `prompts/SUBAGENT.md`, the subagent markdown body, and `prompts/TOOLS.md`.
+## 🧩 Prompt Composition
 
-If the `prompts/` directory or any of its supported prompt files are missing, Squadforge automatically creates them from the framework's bundled defaults.
+Squadforge uses the markdown body of each file in `agents/` as the base prompt for that agent.
 
-The leader personality and orchestration style should live directly in `agents/leader.md`.
+- Leader prompt: `agents/leader.md` + `prompts/SUBAGENTS.md` + `prompts/TOOLS.md` + `prompts/SKILLS.md`
+- Subagent prompt: `prompts/SUBAGENT.md` + subagent markdown body + `prompts/TOOLS.md`
+
+If the `prompts/` directory or one of the supported prompt files is missing, Squadforge scaffolds the defaults automatically.
 
 Supported placeholders inside prompt fragments:
 
@@ -69,118 +147,125 @@ Supported placeholders inside prompt fragments:
 - `{toolsList}`
 - `{skillsList}`
 
-## Skills
+## 🛠️ Built-in Tools
 
-Each skill lives in its own folder under `skills/` and must contain a `SKILL.md` file.
+Leader agents automatically receive:
 
-The skill frontmatter supports:
+- `get_datetime`
+- `read_file`
+- `send_file`
+- `subagent_start`
+- `subagent_chat`
+- `subagent_list`
+
+Subagents automatically receive:
+
+- `get_datetime`
+- `ask_main_agent`
+
+Cron management tools are also available in the runtime tool catalog:
+
+- `cron_create`
+- `cron_get`
+- `cron_list`
+- `cron_update`
+- `cron_delete`
+
+## 🧠 Skills
+
+Each skill lives under `skills/<skill-id>/SKILL.md`.
+
+Supported frontmatter fields:
 
 - `name`
 - `description`
 
-Loaded skills are injected into `prompts/SKILLS.md` and can be listed through the runtime.
+Loaded skills are injected into `prompts/SKILLS.md` and are available to prompt composition.
 
-## Runtime Usage
+## 📡 Channel Contract
 
-```js
-import { forge, OpenRouterLlm } from 'squadforge';
-
-const agent = await forge({
-  rootDir: process.cwd(),
-  llm: new OpenRouterLlm({ apiKey: process.env.OPENROUTER_API_KEY }),
-  model: 'x-ai/grok-4.1-fast'
-});
-
-agent.onMessage(receiveMessage => {
-  telegram.on('message', update => {
-    receiveMessage({
-      sessionId: `telegram:${update.chat.id}`,
-      role: 'user',
-      content: update.text,
-      replyToId: update.message_id
-    });
-  });
-});
-
-agent.sendMessage(async message => {
-  await telegram.sendMessage(message.sessionId.split(':')[1], message.content);
-});
-
-await agent.start();
-```
-
-This makes Squadforge behave much more like Pico: the framework runs as a long-lived chat runtime, inbound channel messages are forwarded into it, and assistant replies are sent back out through one configured sender.
-
-Leader agents also get Pico-style subagent primitives out of the box:
-
-- `subagent_start` launches a specialized subagent in the background.
-- `subagent_chat` sends a follow-up or answers a waiting subagent question.
-- `subagent_list` shows the active subagents for the current session.
-
-Subagents automatically receive `ask_main_agent` so they can pause and request clarification from the leader when needed.
-
-## Channel Contract
-
-Squadforge keeps channel integration outside the core runtime, but it now exposes a minimal shared message contract so adapters like Pico can plug in cleanly.
+Squadforge keeps channel integration outside the runtime, but the runtime speaks one normalized message shape.
 
 Inbound messages accepted by `onMessage(...)`:
 
-- `sessionId` or `sessionKey`: required session identifier. Both are accepted and normalized internally.
-- `role`: optional message role, defaults to `user`.
-- `content`: optional text content, defaults to an empty string.
-- `replyToId`: optional transport-specific reply target.
-- `metadata`: optional adapter-defined metadata object.
-- `file`: optional transport-defined file payload for inbound adapters that want to pass media context through.
+- `sessionId` or `sessionKey`: required session identifier
+- `role`: optional, defaults to `user`
+- `content`: optional text content
+- `replyToId`: optional transport-specific reply target
+- `metadata`: optional adapter-defined metadata
+- `file`: optional inbound file payload
 
 Outbound messages emitted through `sendMessage(...)` and direct runtime sends:
 
-- `sessionId`: normalized session identifier.
-- `sessionKey`: alias of `sessionId` for Pico-style adapters.
-- `role`: usually `assistant`.
-- `content`: text content.
-- `replyToId`: optional reply target.
-- `metadata`: passthrough adapter metadata.
-- `timedOut`: optional timeout flag.
-- `error`: optional error string.
-- `file`: optional outbound file payload.
+- `sessionId`
+- `sessionKey`
+- `role`
+- `content`
+- `replyToId`
+- `metadata`
+- `timedOut`
+- `error`
+- `file`
 
 Outbound file payload shape:
 
-- `path`: absolute or workspace-resolved file path.
-- `caption`: optional caption text.
-- `name`: optional display name.
-- `mimeType`: optional MIME type.
-- `metadata`: optional adapter-specific file metadata.
+- `path`
+- `caption`
+- `name`
+- `mimeType`
+- `metadata`
 
-The framework now exposes `send_file` as a generic predefined leader tool and exports the normalization helpers from the package entrypoint so adapters can reuse the same envelope shape.
+## ⏱️ Runtime Policies
 
-## Runtime Policies
+Default runtime behavior:
 
-Squadforge now applies a soft run deadline model by default:
-
-- soft run deadline per agent run: 5 minutes
-- wrap-up warning injection before the deadline: 60 seconds remaining
-- session trimming: keep system messages plus the newest messages up to 50 total
-- stale session cleanup: expire non-leader sessions after 24 hours of inactivity
-- transient retries: 2 retries for LLM calls
+- soft runtime deadline per agent run: 5 minutes
+- wrap-up warning threshold: 60 seconds remaining
+- maximum messages kept per session: 50
+- session TTL for non-leader sessions: 24 hours
+- transient LLM retries: 2
 
 These can be overridden through `forge(...)`:
 
 ```js
 const agent = await forge({
-  maxRuntimeMs: 5 * 60 * 1000,
-  wrapUpThresholdMs: 60 * 1000,
-  maxMessagesPerSession: 50,
-  sessionTtlMs: 24 * 60 * 60 * 1000,
-  llmChatMaxRetries: 2
+    maxRuntimeMs: 5 * 60 * 1000,
+    wrapUpThresholdMs: 60 * 1000,
+    maxMessagesPerSession: 50,
+    sessionTtlMs: 24 * 60 * 60 * 1000,
+    llmChatMaxRetries: 2
 });
 ```
 
-The deadline is checked between agent turns. It nudges the model to wrap up and stops the next turn once the budget is exhausted, but it does not cancel an in-flight LLM request or running tool.
+The runtime checks deadlines between turns. It does not cancel in-flight LLM requests or already-running tool executions.
 
-## Public Surface
+## 📚 Public API
 
-- `OpenRouterLlm`
+Current exports:
+
 - `forge`
+- `OpenRouterLlm`
+- `logger`
+- `resolveLogFiles`
+- `readLogTail`
+- config constants from `src/config.js`
 
-The folder loaders are internal implementation details. Consumers initialize a root agent through `forge(...)`, and squadforge loads the `agents/`, `skills/`, and nested `tools/` folders automatically. When `rootDir` is omitted, squadforge defaults it to the current working directory.
+The folder loaders and most runtime internals are intentionally private.
+
+## 🧪 Development
+
+Run the test suite:
+
+```bash
+npm test
+```
+
+Run the bundled example:
+
+```bash
+npm run example
+```
+
+## ⚖️ License
+
+MIT
