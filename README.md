@@ -31,6 +31,7 @@ Squadforge is a JavaScript framework for building one main AI agent that coordin
 
 Squadforge is designed for agent systems that need a clean filesystem convention, a long-lived runtime loop, and built-in delegation primitives without forcing application code to own the orchestration internals.
 
+<a id="features"></a>
 ## ✨ Features
 
 - Filesystem-driven app structure for agents, prompts, skills, tools, sessions, and crons
@@ -42,6 +43,7 @@ Squadforge is designed for agent systems that need a clean filesystem convention
 - OpenRouter-backed LLM client included out of the box
 - Channel-agnostic inbound and outbound runtime message contract
 
+<a id="install"></a>
 ## 📦 Install
 
 ```bash
@@ -52,6 +54,7 @@ Requirements:
 
 - Node.js 18 or newer
 
+<a id="quick-start"></a>
 ## 🚀 Quick Start
 
 ```js
@@ -83,6 +86,7 @@ agent.sendMessage(async message => {
 await agent.start();
 ```
 
+<a id="project-layout"></a>
 ## 🗂️ Project Layout
 
 ```text
@@ -147,6 +151,7 @@ Supported placeholders inside prompt fragments:
 - `{toolsList}`
 - `{skillsList}`
 
+<a id="built-in-tools"></a>
 ## 🛠️ Built-in Tools
 
 Leader agents automatically receive:
@@ -239,6 +244,7 @@ const agent = await forge({
 
 The runtime checks deadlines between turns. It does not cancel in-flight LLM requests or already-running tool executions.
 
+<a id="public-api"></a>
 ## 📚 Public API
 
 Current exports:
