@@ -54,6 +54,7 @@ The workflow will:
 - bump the package version and create the git commit/tag
 - publish the package to npm
 - push the commit and tags back to the repository
+- create a GitHub Release from the new tag
 
 Choose one of these version bumps when you run the workflow:
 
