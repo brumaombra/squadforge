@@ -50,7 +50,6 @@ The workflow will:
 
 - check out the repository with full git history
 - install dependencies
-- run the test suite
 - bump the package version and create the git commit/tag
 - publish the package to npm
 - push the commit and tags back to the repository

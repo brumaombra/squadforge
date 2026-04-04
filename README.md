@@ -260,12 +260,6 @@ The folder loaders and most runtime internals are intentionally private.
 
 ## 🧪 Development
 
-Run the test suite:
-
-```bash
-npm test
-```
-
 Run the example from a repository checkout:
 
 ```bash
