@@ -6,9 +6,9 @@ on:
     tags:
       - 'v*'
 
-# Grant the permissions needed to mint an OIDC token for npm trusted publishing
+# Grant the permissions needed to mint an OIDC token for npm trusted publishing and create a GitHub Release from the pushed version tag
 permissions:
-  contents: read
+  contents: write
   id-token: write
 
 jobs:
@@ -47,3 +47,11 @@ jobs:
       # Publish to npm through trusted publishing using the GitHub OIDC identity
       - name: Publish to npm
         run: npm publish --access public --provenance
+
+      # Create a GitHub Release for the same tag with generated release notes
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ github.ref_name }}
+          name: ${{ github.ref_name }}
+          generate_release_notes: true

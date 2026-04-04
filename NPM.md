@@ -53,6 +53,7 @@ The workflow will:
 - install dependencies
 - verify that the pushed tag matches the version in `package.json`
 - publish the package to npm
+- create a GitHub Release from the same tag with generated release notes
 
 Use this release flow locally:
 
