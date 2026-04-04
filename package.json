@@ -1,6 +1,6 @@
 {
     "name": "squadforge",
-    "version": "0.1.4",
+    "version": "0.1.5",
     "description": "JavaScript framework for building a main AI agent that orchestrates specialized subagents, tools, prompts, skills, sessions, and cron workflows.",
     "author": "Mauro Brambilla",
     "type": "module",
