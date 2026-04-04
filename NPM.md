@@ -44,22 +44,24 @@ Use this checklist when you want to publish a new version of Squadforge to npm.
 
 This repository uses GitHub Actions for release automation.
 
-Set up a secret named `NPM_TOKEN` in GitHub with publish access to the package, then run the release workflow from the **Actions** tab.
+Set up npm trusted publishing for this repository with GitHub OIDC. After that, publishing happens when you push a version tag.
 
 The workflow will:
 
-- check out the repository with full git history
+- trigger when you push a tag like `v0.1.3`
+- check out the repository
 - install dependencies
-- bump the package version and create the git commit/tag
+- verify that the pushed tag matches the version in `package.json`
 - publish the package to npm
-- push the commit and tags back to the repository
-- create a GitHub Release from the new tag
 
-Choose one of these version bumps when you run the workflow:
+Use this release flow locally:
 
-- `patch`
-- `minor`
-- `major`
+```bash
+npm version patch
+git push --follow-tags
+```
+
+Or replace `patch` with `minor` or `major` when needed.
 
 If you want to preview the release locally before running the workflow, use:
 
@@ -72,7 +74,7 @@ npm pack --dry-run
 - Do not republish the same version number.
 - If the package was unpublished earlier, you still republish it under the same name, but the version must be new.
 - This package is configured as public in `package.json`, so no extra access flag is needed for normal publishes.
-- The GitHub Actions workflow expects a git remote named `origin` and publish access through `NPM_TOKEN`.
+- The pushed git tag must match the `package.json` version, for example `v0.1.3` with version `0.1.3`.
 
 ## Common checks
 
